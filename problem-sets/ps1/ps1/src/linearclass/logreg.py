@@ -12,10 +12,21 @@ def main(train_path, valid_path, save_path):
     """
     x_train, y_train = util.load_dataset(train_path, add_intercept=True)
 
+
     # *** START CODE HERE ***
     # Train a logistic regression classifier
     # Plot decision boundary on top of validation set set
     # Use np.savetxt to save predictions on eval set to save_path
+
+    model = LogisticRegression()
+    model.fit(x_train, y_train)
+
+    x_valid, y_valid = util.load_dataset(valid_path, add_intercept=True)
+    probabilities = model.predict(x_valid)
+    np.savetxt(save_path, probabilities)
+
+    plot_path = save_path.rsplit('.', 1)[0] + '.png'
+    util.plot(x_valid, y_valid, model.theta, plot_path)
     # *** END CODE HERE ***
 
 
@@ -51,6 +62,21 @@ class LogisticRegression:
             y: Training example labels. Shape (n_examples,).
         """
         # *** START CODE HERE ***
+            # initialize theta as vector of zeroes based on x's number of examples
+        self.theta = np.zeros(x.shape[1])
+            # newton's method iterations, max of self.max_iter iterations
+        for _ in range(self.max_iter):
+                # calculate all the step terms   
+            h = self.predict(x)
+            gradient = (x.T @ (h - y)) / x.shape[0]
+            hessian = (x.T @ np.diag(h * (1 - h)) @ x) / x.shape[0]
+                # update theta based on calculated step  
+            step = np.linalg.solve(hessian, gradient)
+            self.theta = self.theta - step
+                # ends the fit when the step is smaller then self.eps
+            if np.sum(np.abs(step)) < self.eps:
+                break
+        
         # *** END CODE HERE ***
 
     def predict(self, x):
@@ -59,10 +85,13 @@ class LogisticRegression:
         Args:
             x: Inputs of shape (n_examples, dim).
 
-        Returns:
+        Returns:a
             Outputs of shape (n_examples,).
         """
         # *** START CODE HERE ***
+            # calculate score based on current theta and returns sigmoid result
+        scores = x @ self.theta
+        return 1.0 / (1.0 + np.exp(-scores))
         # *** END CODE HERE ***
 
 if __name__ == '__main__':
